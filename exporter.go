@@ -333,7 +333,7 @@ func scrapeMySQLConnectionPool(db *sql.DB, ch chan<- prometheus.Metric) error {
 				prometheus.NewDesc(
 					prometheus.BuildFQName(namespace, "connection_pool", m.name),
 					m.help,
-					[]string{"hostgroup", "endpoint"}, nil,
+					[]string{"hostgroup", "server_endpoint"}, nil,
 				),
 				m.valueType, value,
 				hostgroup, srvHost+":"+srvPort,
