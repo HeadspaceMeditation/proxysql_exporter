@@ -30,6 +30,7 @@ const namespace = "proxysql"
 // It implements prometheus.Collector interface.
 type Exporter struct {
 	dsn                       string
+	databaseNameGlobal        string
 	scrapeMySQLGlobal         bool
 	scrapeMySQLConnectionPool bool
 	scrapesTotal              prometheus.Counter
@@ -41,9 +42,10 @@ type Exporter struct {
 
 // NewExporter returns a new ProxySQL exporter for the provided DSN.
 // It scrapes stats_mysql_global and stats_mysql_connection_pool if corresponding parameters are true.
-func NewExporter(dsn string, scrapeMySQLGlobal bool, scrapeMySQLConnectionPool bool) *Exporter {
+func NewExporter(dsn string, databaseNameGlobal string, scrapeMySQLGlobal bool, scrapeMySQLConnectionPool bool) *Exporter {
 	return &Exporter{
 		dsn:                       dsn,
+		databaseNameGlobal:        databaseNameGlobal,
 		scrapeMySQLGlobal:         scrapeMySQLGlobal,
 		scrapeMySQLConnectionPool: scrapeMySQLConnectionPool,
 
@@ -151,13 +153,13 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) {
 	e.proxysqlUp.Set(1)
 
 	if e.scrapeMySQLGlobal {
-		if err = scrapeMySQLGlobal(db, ch); err != nil {
+		if err = scrapeMySQLGlobal(e.databaseNameGlobal, db, ch); err != nil {
 			log.Errorln("Error scraping for collect.mysql_status:", err)
 			e.scrapeErrorsTotal.WithLabelValues("collect.mysql_status").Inc()
 		}
 	}
 	if e.scrapeMySQLConnectionPool {
-		if err = scrapeMySQLConnectionPool(db, ch); err != nil {
+		if err = scrapeMySQLConnectionPool(e.databaseNameGlobal, db, ch); err != nil {
 			log.Errorln("Error scraping for collect.mysql_connection_pool:", err)
 			e.scrapeErrorsTotal.WithLabelValues("collect.mysql_connection_pool").Inc()
 		}
@@ -195,7 +197,7 @@ var mySQLGlobalMetrics = map[string]*metric{
 }
 
 // scrapeMySQLGlobal collects metrics from `stats_mysql_global`.
-func scrapeMySQLGlobal(db *sql.DB, ch chan<- prometheus.Metric) error {
+func scrapeMySQLGlobal(databaseName string, db *sql.DB, ch chan<- prometheus.Metric) error {
 	rows, err := db.Query(mySQLGlobalQuery)
 	if err != nil {
 		return err
@@ -226,9 +228,10 @@ func scrapeMySQLGlobal(db *sql.DB, ch chan<- prometheus.Metric) error {
 			prometheus.NewDesc(
 				prometheus.BuildFQName(namespace, "mysql_status", m.name),
 				m.help,
-				nil, nil,
+				[]string{"database"}, nil,
 			),
 			m.valueType, value,
+			databaseName,
 		)
 	}
 	return rows.Err()
@@ -266,7 +269,7 @@ var mySQLconnectionPoolMetrics = map[string]*metric{
 }
 
 // scrapeMySQLConnectionPool collects metrics from `stats_mysql_connection_pool`.
-func scrapeMySQLConnectionPool(db *sql.DB, ch chan<- prometheus.Metric) error {
+func scrapeMySQLConnectionPool(databaseName string, db *sql.DB, ch chan<- prometheus.Metric) error {
 	rows, err := db.Query(mySQLconnectionPoolQuery)
 	if err != nil {
 		return err
@@ -333,10 +336,10 @@ func scrapeMySQLConnectionPool(db *sql.DB, ch chan<- prometheus.Metric) error {
 				prometheus.NewDesc(
 					prometheus.BuildFQName(namespace, "connection_pool", m.name),
 					m.help,
-					[]string{"hostgroup", "server_endpoint"}, nil,
+					[]string{"database", "hostgroup", "server_endpoint"}, nil,
 				),
 				m.valueType, value,
-				hostgroup, srvHost+":"+srvPort,
+				databaseName, hostgroup, srvHost+":"+srvPort,
 			)
 		}
 	}

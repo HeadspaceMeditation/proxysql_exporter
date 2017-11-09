@@ -33,6 +33,7 @@ const (
 )
 
 var (
+	databaseF      = flag.String("database", "", "Value of database label added to all metrics")
 	versionF       = flag.Bool("version", false, "Print version information and exit.")
 	listenAddressF = flag.String("web.listen-address", ":42004", "Address to listen on for web interface and telemetry.")
 	telemetryPathF = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
@@ -64,7 +65,7 @@ func main() {
 
 	log.Infof("Starting %s %s for %s", program, version.Version, dsn)
 
-	exporter := NewExporter(dsn, *mysqlStatusF, *mysqlConnectionPoolF)
+	exporter := NewExporter(dsn, *databaseF, *mysqlStatusF, *mysqlConnectionPoolF)
 	prometheus.MustRegister(exporter)
 
 	exporter_shared.RunServer("ProxySQL", *listenAddressF, *telemetryPathF, promhttp.ContinueOnError)
