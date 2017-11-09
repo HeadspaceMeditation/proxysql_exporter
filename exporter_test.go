@@ -110,12 +110,12 @@ func TestScrapeMySQLGlobal(t *testing.T) {
 	}()
 
 	counterExpected := []metricResult{
-		{"proxysql_mysql_status_active_transactions", prometheus.Labels{}, 3, dto.MetricType_GAUGE},
-		{"proxysql_mysql_status_backend_query_time_nsec", prometheus.Labels{}, 76355784684851, dto.MetricType_UNTYPED},
-		{"proxysql_mysql_status_client_connections_aborted", prometheus.Labels{}, 0, dto.MetricType_COUNTER},
-		{"proxysql_mysql_status_client_connections_connected", prometheus.Labels{}, 64, dto.MetricType_GAUGE},
-		{"proxysql_mysql_status_client_connections_created", prometheus.Labels{}, 1087931, dto.MetricType_COUNTER},
-		{"proxysql_mysql_status_servers_table_version", prometheus.Labels{}, 2019470, dto.MetricType_UNTYPED},
+		{"proxysql_mysql_status_active_transactions", prometheus.Labels{"database": "mydb"}, 3, dto.MetricType_GAUGE},
+		{"proxysql_mysql_status_backend_query_time_nsec", prometheus.Labels{"database": "mydb"}, 76355784684851, dto.MetricType_UNTYPED},
+		{"proxysql_mysql_status_client_connections_aborted", prometheus.Labels{"database": "mydb"}, 0, dto.MetricType_COUNTER},
+		{"proxysql_mysql_status_client_connections_connected", prometheus.Labels{"database": "mydb"}, 64, dto.MetricType_GAUGE},
+		{"proxysql_mysql_status_client_connections_created", prometheus.Labels{"database": "mydb"}, 1087931, dto.MetricType_COUNTER},
+		{"proxysql_mysql_status_servers_table_version", prometheus.Labels{"database": "mydb"}, 2019470, dto.MetricType_UNTYPED},
 	}
 	convey.Convey("Metrics comparison", t, convey.FailureContinues, func() {
 		for _, expect := range counterExpected {
