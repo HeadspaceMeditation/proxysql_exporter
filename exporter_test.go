@@ -103,7 +103,7 @@ func TestScrapeMySQLGlobal(t *testing.T) {
 
 	ch := make(chan prometheus.Metric)
 	go func() {
-		if err = scrapeMySQLGlobal(db, ch); err != nil {
+		if err = scrapeMySQLGlobal("mydb", db, ch); err != nil {
 			t.Errorf("error calling function on test: %s", err)
 		}
 		close(ch)
@@ -155,7 +155,7 @@ func TestScrapeMySQLConnectionPool(t *testing.T) {
 
 	ch := make(chan prometheus.Metric)
 	go func() {
-		if err = scrapeMySQLConnectionPool(db, ch); err != nil {
+		if err = scrapeMySQLConnectionPool("mydb", db, ch); err != nil {
 			t.Errorf("error calling function on test: %s", err)
 		}
 		close(ch)
@@ -221,7 +221,7 @@ func TestExporter(t *testing.T) {
 	}
 
 	// wait up to 30 seconds for ProxySQL to become available
-	exporter := NewExporter("admin:admin@tcp(127.0.0.1:16032)/", true, true)
+	exporter := NewExporter("admin:admin@tcp(127.0.0.1:16032)/", "mydb", true, true)
 	for i := 0; i < 30; i++ {
 		db, err := exporter.db()
 		if err != nil {
